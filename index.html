@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PayDemo Sandbox</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background:#0f172a; display:flex; justify-content:center; align-items:center; min-height:100vh; padding:12px; }
+    .phone { max-width:420px; width:100%; background:#f1f5f9; border-radius:40px; padding:16px 14px 20px; box-shadow:0 30px 80px rgba(0,0,0,.6); min-height:750px; }
+    .status { display:flex; justify-content:space-between; font-size:13px; font-weight:600; color:#0f172a; padding-bottom:10px; border-bottom:1px solid rgba(0,0,0,.05); }
+    .sandbox-badge { display:inline-block; background:#8b5cf6; color:#fff; font-size:9px; font-weight:700; padding:2px 10px; border-radius:30px; text-transform:uppercase; }
+    .disclaimer { background:#fef3c7; border-left:4px solid #f59e0b; padding:8px 12px; border-radius:8px; font-size:11px; color:#92400e; margin:8px 0 12px; }
+    .flow-indicator { display:flex; justify-content:center; gap:8px; margin:6px 0 10px; }
+    .dot { width:8px; height:8px; border-radius:50%; background:#cbd5e1; }
+    .dot.active { background:#0056e0; width:24px; border-radius:12px; }
+    .screen.hidden { display:none; }
+    .summary, .menu-item, .product-row, .cart-summary, .card-form, .receipt-box, .payment-status, .edit-modal, .webhook-log { background:#fff; border-radius:16px; }
+    .summary { padding:16px; margin:14px 0; cursor:pointer; }
+    .summary-grid { display:flex; justify-content:space-between; margin-top:6px; }
+    .stat .number { font-size:22px; font-weight:700; color:#0f172a; }
+    .stat .sub { font-size:11px; color:#64748b; }
+    .trend { background:#dcfce7; color:#166534; font-size:11px; padding:3px 12px; border-radius:30px; display:inline-block; margin-top:4px; }
+    .top-actions { display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+    .top-btn, .quick-action, .pay-btn, .confirm-btn, .done-btn, .print-btn, .add-product-btn, .reset-btn { border:none; cursor:pointer; font-weight:700; }
+    .top-btn { padding:8px 12px; border-radius:10px; background:#e2e8f0; color:#0f172a; font-size:12px; }
+    .quick-action { background:#0056e0; color:#fff; font-size:17px; padding:16px; border-radius:60px; margin:14px 0; width:100%; }
+    .reset-btn { width:100%; background:#ef4444; color:#fff; font-size:15px; padding:12px; border-radius:14px; margin:10px 0; }
+    .menu-item { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; font-size:15px; font-weight:500; color:#0f172a; margin-bottom:2px; text-align:left; width:100%; border:none; cursor:pointer; }
+    .menu-item .left { display:flex; align-items:center; gap:12px; }
+    .menu-item .badge { background:#ef4444; color:#fff; font-size:11px; font-weight:700; padding:2px 12px; border-radius:40px; }
+    .menu-item .badge.warning { background:#f59e0b; }
+    .menu-item .badge.has-record { background:#00a651; }
+    .menu-item .arrow { color:#94a3b8; font-size:18px; }
+    .header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:10px 0 16px; }
+    .header-left { display:flex; align-items:center; gap:12px; }
+    .back-btn { background:none; border:none; font-size:28px; cursor:pointer; }
+    .header h2 { font-size:20px; color:#0f172a; }
+    .search-box { width:100%; padding:14px 18px; border-radius:16px; border:2px solid #e2e8f0; font-size:16px; background:#fff; margin-bottom:14px; }
+    .product-row { display:flex; justify-content:space-between; padding:14px 16px; margin-bottom:8px; cursor:pointer; border-radius:12px; background:#fff; border:1px solid #e2e8f0; transition:.2s; }
+    .product-row:hover { background:#f0f4f8; border-color:#0056e0; }
+    .product-row .price { color:#0056e0; font-weight:600; }
+    .add-product-btn { background:#00a651; color:#fff; font-size:15px; padding:14px; border-radius:14px; margin:10px 0; width:100%; }
+    .cart-summary { padding:16px; margin-top:16px; border-top:3px solid #0056e0; }
+    .cart-row { display:flex; justify-content:space-between; padding:6px 0; font-size:15px; }
+    .cart-row.total { font-weight:700; font-size:18px; border-top:2px solid #e2e8f0; padding-top:12px; margin-top:6px; }
+    .pay-btn { background:#00a651; color:#fff; font-size:18px; padding:16px; border-radius:60px; margin-top:14px; width:100%; }
+    .payment-options { display:flex; flex-direction:column; gap:10px; margin:16px 0; }
+    .payment-option { padding:16px 20px; background:#fff; border-radius:16px; border:2px solid #e2e8f0; display:flex; align-items:center; gap:14px; cursor:pointer; font-size:16px; font-weight:500; }
+    .payment-option.selected { border-color:#0056e0; background:#eff6ff; }
+    .payment-option .icon { font-size:28px; }
+    .payment-option .check { margin-left:auto; color:#00a651; display:none; }
+    .payment-option.selected .check { display:block; }
+    .confirm-btn { background:#0056e0; color:#fff; font-size:18px; padding:16px; border-radius:60px; margin-top:10px; width:100%; }
+    .confirm-btn:disabled { opacity:.5; cursor:not-allowed; }
+    .card-form { padding:18px; margin:14px 0; border:2px solid #dbeafe; }
+    .card-form h3, .edit-modal h3 { font-size:16px; margin-bottom:12px; color:#0f172a; }
+    .card-form label, .edit-modal label { font-size:13px; font-weight:600; color:#0f172a; display:block; margin-top:10px; }
+    .card-form input, .edit-modal input { width:100%; padding:12px 14px; border:2px solid #e2e8f0; border-radius:12px; font-size:15px; margin-top:4px; }
+    .receipt-box { padding:14px; margin:16px 0; border:1px solid #d1d5db; font-family:monospace; font-size:12px; line-height:1.5; }
+    .receipt-title { text-align:center; font-weight:700; font-size:14px; margin-bottom:6px; }
+    .receipt-line, .receipt-item { display:flex; justify-content:space-between; gap:10px; }
+    .receipt-item span:first-child { flex:1; }
+    .receipt-item span:last-child { text-align:right; min-width:70px; }
+    .receipt-divider { border-top:1px dashed #9ca3af; margin:6px 0; padding-top:6px; }
+    .receipt-actions { display:flex; gap:10px; margin-top:12px; }
+    .receipt-actions button, .edit-modal .modal-actions button { flex:1; padding:12px; border:none; border-radius:12px; font-weight:600; cursor:pointer; }
+    .print-btn { background:#111827; color:#fff; }
+    .done-btn { background:#00a651; color:#fff; }
+    .webhook-log { color:#a5f3fc; padding:12px; margin-top:16px; font-family:monospace; font-size:11px; max-height:120px; overflow-y:auto; border:1px solid #1e293b; background:#0f172a; border-radius:12px; }
+    .webhook-log .entry { padding:4px 0; border-bottom:1px solid #1e293b; }
+    .toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:#0f172a; color:#fff; padding:12px 24px; border-radius:60px; font-size:14px; opacity:0; transition:.3s ease; width:90%; max-width:360px; text-align:center; z-index:999; pointer-events:none; }
+    .toast.show { opacity:1; }
+    .payment-status { padding:20px; text-align:center; margin:16px 0; border:2px solid #e2e8f0; border-radius:12px; }
+    .payment-status .status-icon { font-size:48px; margin-bottom:8px; }
+    .payment-status .status-text { font-size:18px; font-weight:600; color:#0f172a; }
+    .payment-status .status-sub { font-size:14px; color:#64748b; margin-top:4px; }
+    .payment-status .progress-bar { width:100%; height:6px; background:#e2e8f0; border-radius:10px; margin-top:14px; overflow:hidden; }
+    .payment-status .progress-bar .fill { height:100%; background:#0056e0; border-radius:10px; width:0%; }
+    .edit-modal { padding:20px; margin:12px 0; border:2px solid #0056e0; border-radius:12px; }
+    .edit-modal .modal-actions { display:flex; gap:10px; margin-top:14px; }
+    .btn-save { background:#0056e0; color:#fff; }
+    .btn-cancel { background:#e2e8f0; color:#0f172a; }
+    .product-mgmt-item { display:flex; justify-content:space-between; padding:12px 16px; background:#fff; border-radius:12px; margin-bottom:6px; border:1px solid #e2e8f0; }
+    .product-mgmt-item .info { flex:1; }
+    .product-mgmt-item .info .name { font-weight:500; }
+    .product-mgmt-item .info .price { font-size:13px; color:#64748b; }
+    .product-mgmt-item .actions { display:flex; gap:6px; }
+    .product-mgmt-item .actions button { padding:6px 12px; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; }
+    .btn-edit { background:#dbeafe; color:#1e40af; }
+    .btn-delete { background:#fee2e2; color:#991b1b; }
+    .empty-state { text-align:center; padding:30px 20px; color:#64748b; }
+    .empty-state .title { font-size:16px; font-weight:600; color:#0f172a; }
+    .record-item { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:#fff; border-radius:12px; margin-bottom:6px; border-left:4px solid #0056e0; }
+    .record-item .info { flex:1; }
+    .record-item .info .ref { font-weight:600; color:#0f172a; }
+    .record-item .info .details { font-size:12px; color:#64748b; margin-top:2px; }
+    .record-item .amount { font-weight:700; color:#00a651; }
+    .record-item .method { font-size:12px; background:#f0f4f8; padding:4px 12px; border-radius:20px; color:#0f172a; }
+    .hidden { display:none !important; }
+    @media print {
+      body * { visibility:hidden; }
+      .printable-receipt, .printable-receipt * { visibility:visible; }
+      .printable-receipt { position:absolute; left:0; top:0; width:220px; padding:12px; background:#fff; color:#000; border:none; font-family:monospace; font-size:11px; }
+      .printable-receipt .no-print { display:none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="phone" id="appShell">
+    <div class="status"><span>PayDemo <span class="sandbox-badge">Sandbox</span></span><span>🔔</span></div>
+    <div class="disclaimer"><strong>DEMO APPLICATION</strong> — Sandbox test environment. Not affiliated with any payment brand. All transactions are simulated.</div>
+    <div class="flow-indicator"><div class="dot active" id="d1"></div><div class="dot" id="d2"></div><div class="dot" id="d3"></div><div class="dot" id="d4"></div><div class="dot" id="d5"></div></div>
+
+    <div class="screen" id="scr-dashboard">
+      <div class="summary" id="summaryCard">
+        <div style="font-size:12px;font-weight:600;color:#64748b;">Today's Summary</div>
+        <div class="summary-grid">
+          <div class="stat"><div class="number" id="totalSales">₱0</div><div class="sub">Sales</div></div>
+          <div class="stat"><div class="number" id="totalTrans">0</div><div class="sub">Trans</div></div>
+          <div class="stat"><div class="number" id="avgSale">₱0</div><div class="sub">Avg</div></div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:4px;"><span class="trend" id="trendBadge">0% vs yesterday</span></div>
+      </div>
+      <div class="top-actions">
+        <button class="top-btn" id="fullscreenBtn">Full Screen</button>
+        <button class="top-btn" id="clockBtn" onclick="window.open('clock.html', '_blank')">🕐 Clock</button>
+      </div>
+      <button class="quick-action" id="newSaleBtn">New Sale</button>
+      <button class="menu-item" id="productsMenuBtn" style="cursor:pointer;"><span class="left"><span>👕</span> Apparel Items</span><span class="badge" id="productBadge">5</span></button>
+      <button class="menu-item" id="inventoryMenuBtn" style="cursor:pointer;"><span class="left"><span>📦</span> Inventory</span><span class="badge warning">!</span></button>
+      <button class="menu-item" id="receiptsMenuBtn" style="cursor:pointer;"><span class="left"><span>🧾</span> Receipts</span><span class="badge" id="receiptBadge">0</span></button>
+      <button class="menu-item" id="analyticsMenuBtn" style="cursor:pointer;"><span class="left"><span>📊</span> Analytics</span><span class="arrow">›</span></button>
+      <button class="menu-item" id="returnsMenuBtn" style="cursor:pointer;"><span class="left"><span>🔄</span> Sales Returns</span><span class="arrow">›</span></button>
+      <button class="reset-btn" id="resetAllBtn">Reset All Sales</button>
+      <div class="webhook-log"><div style="color:#64748b;font-size:10px;margin-bottom:6px;">Webhook Log</div><div id="logEntries"><div class="entry">[System] Ready</div></div></div>
+    </div>
+
+    <div class="screen hidden" id="scr-sale">
+      <div class="header"><div class="header-left"><button class="back-btn" id="backFromSale">‹</button><h2>New Sale</h2></div></div>
+      <input class="search-box" type="text" placeholder="Search apparel..." id="searchInput" />
+      <div id="productList"></div>
+      <div class="cart-summary">
+        <div class="cart-row"><span>Subtotal</span><span id="subtotal">₱0</span></div>
+        <div class="cart-row"><span>Qty</span><span id="qtyCount">0</span></div>
+        <div class="cart-row total"><span>Total</span><span id="totalAmount">₱0</span></div>
+        <button class="pay-btn" id="proceedPayBtn">Proceed to Pay</button>
+      </div>
+    </div>
+
+    <div class="screen hidden" id="scr-payment">
+      <div class="header"><div class="header-left"><button class="back-btn" id="backFromPayment">‹</button><h2>Payment</h2></div></div>
+      <div style="background:#fff;border-radius:16px;padding:16px;margin:8px 0;"><div style="display:flex;justify-content:space-between;font-size:15px;"><span>Amount due</span><span style="font-weight:700;font-size:20px;color:#0f172a;" id="paymentAmount">₱0</span></div></div>
+      <div class="payment-status hidden" id="paymentStatus"><div class="status-icon" id="statusIcon">⏳</div><div class="status-text" id="statusText">Processing payment…</div><div class="status-sub" id="statusSub">Please wait</div><div class="progress-bar"><div class="fill" id="progressFill"></div></div></div>
+      <div class="payment-options" id="paymentOptions">
+        <div class="payment-option selected" data-method="gcash"><span class="icon">📱</span> GCash (Simulated)<span class="check">✓</span></div>
+        <div class="payment-option" data-method="cash"><span class="icon">💵</span> Cash<span class="check">✓</span></div>
+        <div class="payment-option" data-method="card"><span class="icon">💳</span> Card<span class="check">✓</span></div>
+      </div>
+      <div class="card-form hidden" id="cardForm">
+        <h3>Enter Card Details</h3>
+        <label>Cardholder Name</label>
+        <input type="text" id="cardHolder" placeholder="John Doe" />
+        <label>Last 4 Digits</label>
+        <input type="text" id="cardNumber" placeholder="1234" maxlength="4" />
+      </div>
+      <div class="card-form hidden" id="gcashForm">
+        <h3>Enter GCash Details</h3>
+        <label>Last 4 Digits of Reference Number</label>
+        <input type="text" id="gcashRef" placeholder="1234" maxlength="4" />
+        <label>Last 4 Digits of Phone Number</label>
+        <input type="text" id="gcashPhone" placeholder="1234" maxlength="4" />
+      </div>
+      <button class="confirm-btn" id="confirmPayBtn">Confirm Payment</button>
+      <div style="text-align:center;font-size:11px;color:#94a3b8;margin-top:10px;">Sandbox mode — No real money charged</div>
+    </div>
+
+    <div class="screen hidden" id="scr-receipt">
+      <div class="header"><h2>Receipt</h2></div>
+      <div class="receipt-box printable-receipt" id="printableReceipt">
+        <div class="receipt-title">APPAREL RECEIPT</div>
+        <div class="receipt-line"><span id="receiptStore">PayDemo Store</span><span id="receiptDateShort">-</span></div>
+        <div class="receipt-line"><span>Ref:</span><span id="refCode">-</span></div>
+        <div class="receipt-line"><span>Receipt:</span><span id="receiptNo">-</span></div>
+        <div class="receipt-divider"></div>
+        <div id="receiptItems"></div>
+        <div class="receipt-divider"></div>
+        <div class="receipt-line"><span>SUBTOTAL</span><span id="receiptSubtotal">₱0</span></div>
+        <div class="receipt-line"><span>TOTAL</span><span id="receiptTotal">₱0</span></div>
+        <div class="receipt-line"><span>METHOD</span><span id="receiptMethod">-</span></div>
+        <div class="receipt-actions no-print"><button class="print-btn" id="printBtn">Print Receipt</button><button class="done-btn" id="doneBtn">Back</button></div>
+      </div>
+    </div>
+
+    <div class="screen hidden" id="scr-products">
+      <div class="header"><div class="header-left"><button class="back-btn" id="backFromProducts">‹</button><h2>Apparel Items</h2></div></div>
+      <button class="add-product-btn" id="addProductBtn">Add New Item</button>
+      <div class="edit-modal hidden" id="productForm"><h3 id="formTitle">Add Item</h3><label>Item Name</label><input type="text" id="productNameInput" placeholder="e.g., T-Shirt" /><label>Price</label><input type="number" id="productPriceInput" placeholder="e.g., 150" /><div class="modal-actions"><button class="btn-cancel" id="formCancelBtn">Cancel</button><button class="btn-save" id="formSaveBtn">Save</button></div></div>
+      <div id="productMgmtList"></div>
+    </div>
+
+    <div class="screen hidden" id="scr-receipts">
+      <div class="header"><div class="header-left"><button class="back-btn" id="backFromReceipts">‹</button><h2>Transaction Records</h2></div></div>
+      <div id="recordList"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    var products = [
+      { id: 1, name: 'T-Shirt', price: 299 },
+      { id: 2, name: 'Jeans', price: 899 },
+      { id: 3, name: 'Cap', price: 199 },
+      { id: 4, name: 'Hoodie', price: 1299 },
+      { id: 5, name: 'Sneakers', price: 2499 }
+    ];
+    var nextId = 6, editingProductId = null, cart = [], selectedPayment = 'gcash';
+    var transactionHistory = [], webhookLogs = [], isProcessing = false, progressInterval = null, paymentTimer = null, toastTimer = null;
+    var fullscreen = false;
+
+    function showToast(msg) { var el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(function () { el.classList.remove('show'); }, 2000); }
+    function addLog(msg) { var now = new Date(), h = String(now.getHours()).padStart(2, '0'), m = String(now.getMinutes()).padStart(2, '0'), s = String(now.getSeconds()).padStart(2, '0'); webhookLogs.push({ time: h + ':' + m + ':' + s, msg: msg }); var html = '', start = Math.max(0, webhookLogs.length - 8); for (var i = start; i < webhookLogs.length; i++) html += '<div class="entry">[' + webhookLogs[i].time + '] ' + webhookLogs[i].msg + '</div>'; document.getElementById('logEntries').innerHTML = html; }
+    function getEmoji(name) { return ({ 'T-Shirt':'👕', Jeans:'👖', Cap:'🧢', Hoodie:'🧥', Sneakers:'👟' })[name] || '🛍️'; }
+    function toggleFullscreen() { fullscreen = !fullscreen; var shell = document.getElementById('appShell'); if (fullscreen) { shell.style.position = 'fixed'; shell.style.inset = '0'; shell.style.maxWidth = 'none'; shell.style.width = '100vw'; shell.style.height = '100vh'; shell.style.borderRadius = '0'; shell.style.overflow = 'auto'; shell.style.paddingBottom = '24px'; showToast('Full screen on'); } else { shell.style.position = ''; shell.style.inset = ''; shell.style.maxWidth = ''; shell.style.width = ''; shell.style.height = ''; shell.style.borderRadius = ''; shell.style.overflow = ''; shell.style.paddingBottom = ''; showToast('Full screen off'); } }
+
+    function resetAllSales() { if (!confirm('Reset all sales and transactions?')) return; transactionHistory = []; webhookLogs = []; document.getElementById('totalSales').textContent = '₱0'; document.getElementById('totalTrans').textContent = '0'; document.getElementById('avgSale').textContent = '₱0'; document.getElementById('trendBadge').textContent = '0% vs yesterday'; document.getElementById('receiptBadge').textContent = '0'; addLog('All sales reset'); showToast('All sales reset to zero'); renderRecordList(); }
+
+    function renderProducts() { var list = document.getElementById('productList'); if (list) { var html = ''; for (var i = 0; i < products.length; i++) { var p = products[i]; html += '<div class="product-row" data-name="' + p.name + '" data-price="' + p.price + '"><span>' + getEmoji(p.name) + ' ' + p.name + '</span><span class="price">₱' + p.price + '</span></div>'; } list.innerHTML = html; var rows = list.querySelectorAll('.product-row'); for (var j = 0; j < rows.length; j++) rows[j].onclick = function () { addToCart(this.dataset.name, parseInt(this.dataset.price)); }; } var mgmt = document.getElementById('productMgmtList'); if (mgmt) { if (products.length === 0) mgmt.innerHTML = '<div class="empty-state"><div class="title">No items yet</div></div>'; else { var html2 = ''; for (var k = 0; k < products.length; k++) { var p2 = products[k]; html2 += '<div class="product-mgmt-item"><div class="info"><div class="name">' + getEmoji(p2.name) + ' ' + p2.name + '</div><div class="price">₱' + p2.price + '</div></div><div class="actions"><button class="btn-edit" data-id="' + p2.id + '">Edit</button><button class="btn-delete" data-id="' + p2.id + '">Delete</button></div></div>'; } mgmt.innerHTML = html2; var editBtns = mgmt.querySelectorAll('.btn-edit'), deleteBtns = mgmt.querySelectorAll('.btn-delete'); for (var e = 0; e < editBtns.length; e++) editBtns[e].onclick = function () { openForm(parseInt(this.dataset.id)); }; for (var d = 0; d < deleteBtns.length; d++) deleteBtns[d].onclick = function () { deleteProduct(parseInt(this.dataset.id)); }; } } var badge = document.getElementById('productBadge'); if (badge) badge.textContent = products.length; }
+
+    function renderRecordList() { var list = document.getElementById('recordList'); if (!list) return; if (transactionHistory.length === 0) { list.innerHTML = '<div class="empty-state"><div class="title">No transactions yet</div></div>'; return; } var html = ''; for (var i = 0; i < transactionHistory.length; i++) { var t = transactionHistory[i]; html += '<div class="record-item"><div class="info"><div class="ref">' + t.ref + '</div><div class="details">' + t.dateTime + '</div></div><div class="method">' + t.method + '</div><div class="amount">₱' + t.amount + '</div></div>'; } list.innerHTML = html; }
+
+    function addToCart(name, price) { cart.push({ name: name, price: price }); updateCart(); showToast('Added ' + name); }
+    function getCartTotal() { var t = 0; for (var i = 0; i < cart.length; i++) t += cart[i].price; return t; }
+    function updateCart() { var total = getCartTotal(); document.getElementById('subtotal').textContent = '₱' + total; document.getElementById('qtyCount').textContent = cart.length; document.getElementById('totalAmount').textContent = '₱' + total; return total; }
+    function resetCart() { cart = []; updateCart(); document.getElementById('paymentAmount').textContent = '₱0'; document.getElementById('receiptTotal').textContent = '₱0'; document.getElementById('receiptSubtotal').textContent = '₱0'; document.getElementById('receiptItems').innerHTML = ''; }
+
+    function openForm(id) { document.getElementById('productForm').classList.remove('hidden'); if (id) { editingProductId = id; var prod = null; for (var i = 0; i < products.length; i++) if (products[i].id === id) { prod = products[i]; break; } document.getElementById('formTitle').textContent = 'Edit Item'; document.getElementById('productNameInput').value = prod ? prod.name : ''; document.getElementById('productPriceInput').value = prod ? prod.price : ''; } else { editingProductId = null; document.getElementById('formTitle').textContent = 'Add Item'; document.getElementById('productNameInput').value = ''; document.getElementById('productPriceInput').value = ''; } }
+    function closeForm() { document.getElementById('productForm').classList.add('hidden'); editingProductId = null; }
+    function saveProduct() { var name = document.getElementById('productNameInput').value.trim(); var price = parseInt(document.getElementById('productPriceInput').value); if (!name) return showToast('Enter a name'); if (!price || price <= 0) return showToast('Enter a valid price'); if (editingProductId) { for (var i = 0; i < products.length; i++) if (products[i].id === editingProductId) { products[i].name = name; products[i].price = price; break; } showToast('Updated ' + name); } else { products.push({ id: nextId++, name: name, price: price }); showToast('Added ' + name); } closeForm(); renderProducts(); }
+    function deleteProduct(id) { var name = ''; for (var i = 0; i < products.length; i++) if (products[i].id === id) { name = products[i].name; break; } if (!confirm('Delete "' + name + '"?')) return; var newList = []; for (var j = 0; j < products.length; j++) if (products[j].id !== id) newList.push(products[j]); products = newList; showToast('Deleted ' + name); renderProducts(); }
+    function showScreen(name) { var ids = ['scr-dashboard', 'scr-sale', 'scr-payment', 'scr-receipt', 'scr-products', 'scr-receipts']; for (var i = 0; i < ids.length; i++) document.getElementById(ids[i]).classList.toggle('hidden', ids[i] !== 'scr-' + name); var map = { dashboard:0, sale:1, payment:2, receipt:3, products:4, receipts:5 }; var active = map[name] || 0; for (var j = 0; j < 5; j++) document.getElementById('d' + (j + 1)).classList.toggle('active', j === active); if (name === 'products' || name === 'sale') renderProducts(); if (name === 'receipts') renderRecordList(); }
+    function resetPaymentUI() { document.getElementById('paymentStatus').classList.add('hidden'); document.getElementById('paymentOptions').style.opacity = '1'; document.getElementById('paymentOptions').style.pointerEvents = 'auto'; document.getElementById('confirmPayBtn').disabled = false; document.getElementById('progressFill').style.width = '0%'; clearInterval(progressInterval); clearTimeout(paymentTimer); isProcessing = false; }
+    function renderReceiptItems() { var html = ''; for (var i = 0; i < cart.length; i++) html += '<div class="receipt-item"><span>' + (i + 1) + '. ' + cart[i].name + '</span><span>₱' + cart[i].price + '</span></div>'; document.getElementById('receiptItems').innerHTML = html || '<div class="receipt-item"><span>No items</span><span>₱0</span></div>'; document.getElementById('receiptSubtotal').textContent = '₱' + getCartTotal(); document.getElementById('receiptTotal').textContent = '₱' + getCartTotal(); document.getElementById('receiptDateShort').textContent = new Date().toLocaleString('en-PH', { month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit' }); }
+
+    function processPayment(amount, method, extraRef) { return new Promise(function (resolve) { isProcessing = true; var btn = document.getElementById('confirmPayBtn'); var statusDiv = document.getElementById('paymentStatus'); var optionsDiv = document.getElementById('paymentOptions'); statusDiv.classList.remove('hidden'); optionsDiv.style.opacity = '0.3'; optionsDiv.style.pointerEvents = 'none'; btn.disabled = true; document.getElementById('statusIcon').textContent = '⏳'; document.getElementById('statusText').textContent = 'Connecting…'; document.getElementById('statusSub').textContent = 'Please wait'; document.getElementById('progressFill').style.width = '0%'; var steps = [{ p:20, t:'Authenticating…' }, { p:45, t:'Processing…' }, { p:70, t:'Verifying…' }, { p:90, t:'Finalizing…' }]; var idx = 0; clearInterval(progressInterval); progressInterval = setInterval(function () { if (idx < steps.length) { document.getElementById('statusText').textContent = steps[idx].t; document.getElementById('progressFill').style.width = steps[idx].p + '%'; idx++; } else clearInterval(progressInterval); }, 700); paymentTimer = setTimeout(function () { clearInterval(progressInterval); document.getElementById('progressFill').style.width = '100%'; document.getElementById('statusIcon').textContent = '✅'; document.getElementById('statusText').textContent = 'Approved!'; var ref = extraRef || ('SBOX-' + Date.now().toString().slice(-8)); var receiptNo = 'RCP-' + Date.now().toString().slice(-10); var now = new Date(); var dateTime = now.toLocaleString('en-PH', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' }); var trans = { ref: ref, amount: amount, method: method, receiptNo: receiptNo, dateTime: dateTime }; transactionHistory.push(trans); addLog('Approved: ' + ref + ' (₱' + amount + ')'); var sales = parseInt(document.getElementById('totalSales').textContent.replace('₱','').replace(/,/g,'')); var transCount = parseInt(document.getElementById('totalTrans').textContent); var newTotal = sales + amount; var newCount = transCount + 1; document.getElementById('totalSales').textContent = '₱' + newTotal.toLocaleString(); document.getElementById('totalTrans').textContent = newCount; document.getElementById('avgSale').textContent = '₱' + Math.round(newTotal / newCount); document.getElementById('receiptBadge').textContent = newCount; btn.disabled = false; optionsDiv.style.opacity = '1'; optionsDiv.style.pointerEvents = 'auto'; isProcessing = false; resolve(trans); }, 2500); }); }
+
+    document.getElementById('fullscreenBtn').onclick = toggleFullscreen;
+    document.getElementById('resetAllBtn').onclick = resetAllSales;
+    document.getElementById('newSaleBtn').onclick = function () { if (cart.length > 0 && !confirm('Clear cart?')) return; resetCart(); showScreen('sale'); };
+    document.getElementById('productsMenuBtn').onclick = function () { showScreen('products'); };
+    document.getElementById('inventoryMenuBtn').onclick = function () { showToast('Inventory checked'); };
+    document.getElementById('receiptsMenuBtn').onclick = function () { showScreen('receipts'); };
+    document.getElementById('analyticsMenuBtn').onclick = function () { showToast(document.getElementById('totalTrans').textContent + ' transactions'); };
+    document.getElementById('returnsMenuBtn').onclick = function () { showToast('Opening Sales Returns…'); };
+    document.getElementById('summaryCard').onclick = function () { showToast('Opening Analytics…'); };
+
+    document.getElementById('backFromSale').onclick = function () { if (cart.length > 0 && !confirm('Clear cart?')) return; resetCart(); showScreen('dashboard'); };
+    document.getElementById('backFromPayment').onclick = function () { if (isProcessing) { showToast('Please wait'); return; } resetPaymentUI(); document.getElementById('cardForm').classList.add('hidden'); document.getElementById('gcashForm').classList.add('hidden'); showScreen('sale'); };
+    document.getElementById('backFromProducts').onclick = function () { showScreen('dashboard'); };
+    document.getElementById('backFromReceipts').onclick = function () { showScreen('dashboard'); };
+    document.getElementById('proceedPayBtn').onclick = function () { if (cart.length === 0) return showToast('Add products'); var total = getCartTotal(); document.getElementById('paymentAmount').textContent = '₱' + total; resetPaymentUI(); document.getElementById('cardForm').classList.add('hidden'); document.getElementById('gcashForm').classList.toggle('hidden', selectedPayment !== 'gcash'); showScreen('payment'); };
+    document.getElementById('addProductBtn').onclick = function () { openForm(null); };
+    document.getElementById('formCancelBtn').onclick = closeForm;
+    document.getElementById('formSaveBtn').onclick = saveProduct;
+
+    document.getElementById('confirmPayBtn').onclick = function () {
+      if (cart.length === 0) return showScreen('dashboard');
+      if (isProcessing) return showToast('Already processing');
+      var total = getCartTotal();
+      var methods = { gcash: 'GCash', cash: 'Cash', card: 'Card' };
+      var method = methods[selectedPayment] || 'GCash';
+
+      if (selectedPayment === 'card') {
+        var name = document.getElementById('cardHolder').value.trim();
+        var last4 = document.getElementById('cardNumber').value.replace(/\D/g, '').slice(-4);
+        if (!name || last4.length !== 4) return showToast('Enter name and last 4 digits');
+        document.getElementById('cardNumber').value = last4;
+        showToast('Card details accepted');
+        resetPaymentUI();
+        processPayment(total, method).then(function (trans) {
+          document.getElementById('refCode').textContent = trans.ref;
+          document.getElementById('receiptMethod').textContent = trans.method + ' - ' + name + ' / ****' + last4;
+          document.getElementById('receiptNo').textContent = trans.receiptNo;
+          renderReceiptItems();
+          showScreen('receipt');
+        });
+        return;
+      }
+
+      if (selectedPayment === 'gcash') {
+        var refInput = document.getElementById('gcashRef').value.trim();
+        var phoneInput = document.getElementById('gcashPhone').value.trim();
+        if (refInput.length !== 4 || phoneInput.length !== 4) return showToast('Enter last 4 digits of reference and phone');
+        resetPaymentUI();
+        processPayment(total, method, refInput + '-' + phoneInput).then(function (trans) {
+          document.getElementById('refCode').textContent = 'Ref ****' + refInput + ' / Phone ****' + phoneInput;
+          document.getElementById('receiptMethod').textContent = trans.method + ' - Ref ****' + refInput + ' / Phone ****' + phoneInput;
+          document.getElementById('receiptNo').textContent = trans.receiptNo;
+          renderReceiptItems();
+          showScreen('receipt');
+        });
+        return;
+      }
+
+      resetPaymentUI();
+      processPayment(total, method).then(function (trans) {
+        document.getElementById('refCode').textContent = trans.ref;
+        document.getElementById('receiptMethod').textContent = trans.method;
+        document.getElementById('receiptNo').textContent = trans.receiptNo;
+        renderReceiptItems();
+        showScreen('receipt');
+      });
+    };
+
+    document.getElementById('printBtn').onclick = function () { window.print(); };
+    document.getElementById('doneBtn').onclick = function () { resetCart(); resetPaymentUI(); showScreen('dashboard'); };
+
+    document.getElementById('searchInput').oninput = function () { var val = this.value.toLowerCase(); var rows = document.querySelectorAll('#productList .product-row'); for (var i = 0; i < rows.length; i++) rows[i].style.display = rows[i].dataset.name.toLowerCase().indexOf(val) !== -1 ? 'flex' : 'none'; };
+
+    var paymentOptions = document.querySelectorAll('.payment-option');
+    for (var p = 0; p < paymentOptions.length; p++) {
+      paymentOptions[p].onclick = function () {
+        if (isProcessing) return showToast('Please wait');
+        var all = document.querySelectorAll('.payment-option');
+        for (var a = 0; a < all.length; a++) all[a].classList.remove('selected');
+        this.classList.add('selected');
+        selectedPayment = this.dataset.method;
+        document.getElementById('cardForm').classList.toggle('hidden', selectedPayment !== 'card');
+        document.getElementById('gcashForm').classList.toggle('hidden', selectedPayment !== 'gcash');
+      };
+    }
+
+    document.getElementById('cardNumber').oninput = function () { this.value = this.value.replace(/\D/g, '').slice(-4); };
+    document.getElementById('gcashRef').oninput = function () { this.value = this.value.replace(/\D/g, '').slice(-4); };
+    document.getElementById('gcashPhone').oninput = function () { this.value = this.value.replace(/\D/g, '').slice(-4); };
+
+    showScreen('dashboard');
+    resetCart();
+    renderProducts();
+    addLog('Sandbox ready');
+  </script>
+</body>
+</html>
